@@ -1,0 +1,4 @@
+pyTelegramBotAPI
+PyPDF2
+docx2txt
+docxtpl
