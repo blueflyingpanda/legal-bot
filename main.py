@@ -1,11 +1,8 @@
 from bot import bot
 
 
-ibot = bot
-
-
 def main():
-    bot.polling()
+    bot.polling(non_stop=True)
 
 
 if __name__ == '__main__':
