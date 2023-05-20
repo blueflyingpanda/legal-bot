@@ -35,7 +35,7 @@ def send_help(message):
 
 @bot.message_handler(commands=['select'])
 def send_selection(message):
-    keyboard = types.InlineKeyboardMarkup()
+    keyboard = types.InlineKeyboardMarkup(row_width=1)
     button_audio_viz = types.InlineKeyboardButton(
         text='Аудиовизуальный контент', callback_data=f'prod_audio_viz')
     button_music_business = types.InlineKeyboardButton(
@@ -49,7 +49,7 @@ def send_selection(message):
 @bot.message_handler(commands=['reset'])
 def send_reset(message):
     bot.send_message(message.from_user.id, 'Вы перестали заполнять договор.')
-    bot.register_next_step_handler(message, lambda message: None)
+    bot.next_step_backend.handlers = {}
 
 
 # CALLBACK HANDLERS #
@@ -62,7 +62,7 @@ def handle_selection_callback_query(call):
     bot.edit_message_reply_markup(
         chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=None
     )
-    keyboard = types.InlineKeyboardMarkup()
+    keyboard = types.InlineKeyboardMarkup(row_width=1)
     button_alienation = types.InlineKeyboardButton(text='Отчуждение прав', callback_data='cont_alienation')
     button_order = types.InlineKeyboardButton(text='Авторский заказ', callback_data='cont_order')
     button_licence = types.InlineKeyboardButton(text='Лицензионное соглашение', callback_data='cont_licence')
@@ -153,6 +153,11 @@ def handle_format_file(call):
 
 def handler(function):
 
+    def check_reset(*args):
+        if args[0].text == '/reset':
+            send_reset(args[0])
+            return True
+
     def base_handler(*args):
         try:
             next_handler, msg = next(user_data[args[0].chat.id]['scenario'])
@@ -164,7 +169,7 @@ def handler(function):
         if next_handler:
             bot.register_next_step_handler(args[0], next_handler)
         if not msg and not next_handler:
-            keyboard = types.InlineKeyboardMarkup()
+            keyboard = types.InlineKeyboardMarkup(row_width=1)
             but_format_docx = types.InlineKeyboardButton(text='docx', callback_data='format_docx')
             but_format_pdf = types.InlineKeyboardButton(text='pdf', callback_data='format_pdf')
             keyboard.add(but_format_docx, but_format_pdf)
@@ -173,6 +178,10 @@ def handler(function):
                              reply_markup=keyboard)
 
     def wrapper(*args):
+        reset_required = check_reset(args[0])
+        if reset_required:
+            del user_data[args[0].chat.id]
+            return
         validation_error = function(args[0])
         if not validation_error:
             base_handler(args[0])
@@ -262,12 +271,12 @@ def get_date(message):
 
 
 scenario_dummy = [
-    (get_name, 'Вы выбрали договор чего-то там\nВведите ФИО. Требования к вводу/пример: Паленов Матвей Октавианович'),
-    (get_series, 'Введите серию паспорта'),
-    (get_number, 'Введите номер паспорта'),
+    # (get_name, 'Вы выбрали договор чего-то там\nВведите ФИО. Требования к вводу/пример: Паленов Матвей Октавианович'),
+    (get_series, 'Введите серию паспорта') ,
+    # (get_number, 'Введите номер паспорта'),
     (get_registration, 'Введите регистрацию'),
     (get_company, 'Введите компанию'),
-    (get_date, 'Введите дату в формате чч.мм.гггг'),
+    # (get_date, 'Введите дату в формате чч.мм.гггг'),
 ]
 scenario_alienation = []
 scenario_order = []
